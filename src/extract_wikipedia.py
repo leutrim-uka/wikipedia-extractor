@@ -27,6 +27,11 @@ parser.add_argument(
 )
 
 parser.add_argument(
+    'language', type=str,
+    help='Path to the text file containing the list of cities'
+)
+
+parser.add_argument(
     'output_format', type=str,
     help='Choose between "html" or "text"'
 )
@@ -98,12 +103,29 @@ def to_file(content: list, path: str, dump: str = True) -> bool:
         return False
 
 
-async def scrape(title, output_format, session, headers):
-    html_url = f"https://en.wikipedia.org/api/rest_v1/page/html/{title}"
-    text_url = f"https://en.wikipedia.org/w/api.php?format=json&action=query&titles={title}" \
+async def scrape(title, language, output_format, session, headers):
+    """
+        Asynchronously fetches and saves a Wikipedia article in the specified format.
+
+        Args:
+            title (str): The title of the Wikipedia article.
+            output_format (str): Format to save ('html' or 'text').
+            session (httpx.AsyncClient): The HTTP client session.
+            headers (dict): HTTP request headers.
+
+        Returns:
+            str: The content of the Wikipedia article.
+
+        Raises:
+            ValueError: If the output format is invalid.
+    """
+
+    html_url = f"https://{language}.wikipedia.org/api/rest_v1/page/html/{title}"
+    text_url = f"https://{language}.wikipedia.org/w/api.php?format=json&action=query&titles={title}" \
                f"&prop=extracts&exlimit=max&explaintext=1&exsectionformat=plain"
 
-    path = os.path.join("../data/districts", title)
+    # path = os.path.join("../data/cities", title)
+    path = "../data/cities"
     if not os.path.exists(path):
         os.makedirs(path)
 
@@ -132,7 +154,7 @@ async def scrape(title, output_format, session, headers):
     return response
 
 
-async def run(citydistlist: list, output_format: str, headers: dict, rate_limit_per_sec: int = 100):
+async def run(citydistlist: list, language: str, output_format: str, headers: dict, rate_limit_per_sec: int = 100):
     """
     Controls the requests made to the server. Provides throttling support to the
     specified number per second.
@@ -142,7 +164,7 @@ async def run(citydistlist: list, output_format: str, headers: dict, rate_limit_
     # HTTPX allows concurrent (async) requests; faster
     session = httpx.AsyncClient()
 
-    scrape_with_headers = partial(scrape, output_format=output_format, session=session, headers=headers)
+    scrape_with_headers = partial(scrape, language=language, output_format=output_format, session=session, headers=headers)
 
     results = await aiometer.run_on_each(
         scrape_with_headers,
@@ -155,6 +177,7 @@ async def run(citydistlist: list, output_format: str, headers: dict, rate_limit_
 
 def main(
         path_to_citylist: str = 'data/citydistlist.txt',
+        language: str = 'en',
         output_format: str = 'text',
         project_name: str = '',
         contact_email: str = '',
@@ -170,7 +193,7 @@ def main(
     if test_n:
         citydistlist = citydistlist[:test_n]
 
-    asyncio.run(run(citydistlist, output_format, headers, max_requests_per_second))
+    asyncio.run(run(citydistlist, language, output_format, headers, max_requests_per_second))
 
 
 if __name__ == "__main__":
@@ -182,6 +205,7 @@ if __name__ == "__main__":
 
     main(
         args.city_list_filepath,
+        args.language,
         args.output_format,
         args.project_name,
         args.email,
