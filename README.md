@@ -12,19 +12,25 @@ This project includes two Python scripts:
    ```bash
    git clone git@github.com:leutrim-uka/wikipedia-extractor.git
    ```
+   Move into `src`:
+   ```bash
+   cd src
+   ```
 
-2. Install dependencies:
+3. Install dependencies:
     ```bash
    pip install -r requirements.txt
    ```
    
 To be able to donwload the articles from Wikipedia using the API, we need to know construct the corresponding URLs. In the URL structure, each article is identified through its title. As a result, we need to get a list of titles for the articles we want to download. We do this through Wikidata. In our usecase, we generate a list of titles corresponding to city articles:
+
 3. Generate list of titles:
     ```bash
-   cd src
    python query_wikidata.py <language_code>
    ```
+
    _<language_code> should be replaced with values like "en", "sq", "de", and so on, depending on the language you want the articles to be downloaded in._
+
 4. Download articles
     ```bash
     python extract_wikipedia.py <city_list_filepath> <language> <output_format> <project_name> <email> <max_requests_per_second> [--n <number_of_cities>]
